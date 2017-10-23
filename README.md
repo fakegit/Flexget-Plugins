@@ -40,7 +40,7 @@ Supported hosters:
 * zippyshare
 
 Multiple hosters are supported too, just use `;` as seperator.
-Don't use other hostername than listed above. 
+Don't use other hoster than listed above. 
 
 
 All plugins are still in a testing-state. Feel free to contribute :-)
