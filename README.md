@@ -39,7 +39,8 @@ Supported hosters:
 * boom
 * zippyshare
 
-Don't use other hostername as listed above. 
+Multiple hosters are supported too, just use `;` as seperator.
+Don't use other hostername than listed above. 
 
 
 All plugins are still in a testing-state. Feel free to contribute :-)
