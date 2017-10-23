@@ -100,7 +100,7 @@ class SearchSerienjunkies(BaseSearchPlugin):
                         search_result_entries.append(self.parse_entry(p, filesize))
             elif(p.find("strong", text="Größe:")):
                 size = p.find("strong", text="Größe:").next_sibling
-                size = size.replace("|","").replace("~", "").strip()
+                size = size.replace("|","").replace("~", "").replace("/","").strip()
                 
                 if size.find("-") != -1:
                     size = size[size.index("-")+1:]
