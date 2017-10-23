@@ -8,9 +8,14 @@ Supported:
 * hd-area.org
 * hd-world.org
 * movie-blog.org
-  
 
-Usage:
+## Installation
+
+Just put the plugin folder next to your Flexget-Configuration.
+
+Install BeautifulSoup4 with `pip install beautifulsoup4` and you're ready to go.
+
+## Usage:
 ```  
 from:
   - searchSerienjunkies:
