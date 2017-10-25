@@ -100,11 +100,9 @@ class SearchSerienjunkies(BaseSearchPlugin):
                         search_result_entries.append(self.parse_entry(p, filesize))
             elif(p.find("strong", text="Größe:")):
                 size = p.find("strong", text="Größe:").next_sibling
-                size = size.replace("|","").replace("~", "").replace("/","").strip()
                 
-                if size.find("-") != -1:
-                    size = size[size.index("-")+1:]
                 ## experimental
+                size = re.findall('([\d]+ [\w]+)',size.replace("|","").strip())[0]
                 filesize = parse_filesize(size)
                 
         ## check for more result pages
@@ -112,8 +110,8 @@ class SearchSerienjunkies(BaseSearchPlugin):
         if next_link:
             next_page = self.get_url_content(next_link['href'])
             search_result_entries.extend(self.parse_result_entry(next_page))
-      
-        return search_result_entries
+        
+        return [x for x in search_result_entries if x is not None]
 
 @event('plugin.register')
 def register_plugin():
