@@ -1,4 +1,4 @@
-import feedparser, re, urllib2, requests
+import feedparser, re, urllib.request, urllib.parse, urllib.error, requests
 from bs4 import BeautifulSoup 
 
 quality = "720"
@@ -28,10 +28,10 @@ def make_rss(title, lnk):
     outputFile.write("</item>\n")
 
 def replaceUmlauts(title):
-    title = title.replace(unichr(228), "ae").replace(unichr(196), "Ae")
-    title = title.replace(unichr(252), "ue").replace(unichr(220), "Ue")
-    title = title.replace(unichr(246), "oe").replace(unichr(214), "Oe")
-    title = title.replace(unichr(223), "ss")
+    title = title.replace(chr(228), "ae").replace(chr(196), "Ae")
+    title = title.replace(chr(252), "ue").replace(chr(220), "Ue")
+    title = title.replace(chr(246), "oe").replace(chr(214), "Oe")
+    title = title.replace(chr(223), "ss")
     title = title.replace('&amp;', "&")
     title = "".join(i for i in title if ord(i)<128)
     return title
@@ -49,12 +49,12 @@ def replaceUmlauts(title):
 
 
 for site in ('1','2','3','4','5','6','7','8','9'):
-    opener = urllib2.build_opener()
+    opener = urllib.request.build_opener()
     opener.addheaders = [('User-agent', 'Mozilla/5.0')]
     url = ('http://hd-world.org/category/serien/page/' + site)
     response = opener.open(url)
     page = response.read()
-    soup = BeautifulSoup(page)
+    soup = BeautifulSoup(page, "lxml")
     for post in soup.findAll("div", {"class" : "post"}):
         for all in post.findAll("h1", {"id" : re.compile('post.*')}):
             for title in all.findAll('a'):
@@ -66,9 +66,7 @@ for site in ('1','2','3','4','5','6','7','8','9'):
         for links in post.findAll('a', href=True):
             season = re.compile('.*S\d{2}E\d{2}.*')
             if season.match(title) and (quality in title) and hoster.lower() in clean_hoster(links.text):
-                print title
                 lnk = links["href"]
-                print lnk
                 make_rss(title, lnk)
 
 # Schreibe RSS footer
