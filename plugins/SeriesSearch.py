@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import logging, re, HTMLParser #, urllib, urllib2, json, requests
+import logging, re, html.parser #, urllib, urllib2, json, requests
 
 from flexget import plugin
 from flexget.event import event
 from flexget.utils.tools import parse_filesize
-from flexget.utils.search import normalize_unicode
+from flexget.components.sites.utils import normalize_unicode
 from .BaseSearchPlugin import BaseSearchPlugin, SearchResultEntry
 
 log = logging.getLogger("SeriesSearchPlugin")
@@ -59,7 +59,7 @@ class SearchSerienjunkies(BaseSearchPlugin):
         result_entries = []
         for r in results:
             ## unescape HTML-Entities eg: &auml; -> ä
-            serienjunkies_name = HTMLParser.HTMLParser().unescape(r[1])
+            serienjunkies_name = html.parser.HTMLParser().unescape(r[1])
             
             ## workaround for SJ inconsistent naming
             ## - strip all non \w-chars, it strips numbers as well, but it should doesnt matter
@@ -118,7 +118,7 @@ class SearchSerienjunkies(BaseSearchPlugin):
 
 @event('plugin.register')
 def register_plugin():
-    plugin.register(SearchSerienjunkies, 'searchSerienjunkies', groups=['search'], api_ver=2)
+    plugin.register(SearchSerienjunkies, 'searchSerienjunkies', interfaces=['search'], api_ver=2)
     
 class SearchDokujunkies(SearchSerienjunkies):
     name = "searchDokujunkies"
@@ -133,7 +133,7 @@ class SearchDokujunkies(SearchSerienjunkies):
             ## workaround for SJ inconsistent naming
             ## - strip all non \w-chars, it strips numbers as well, but it should doesnt matter
             ## eg: You’re the Worst -> YouretheWorst, in serienjunkies search it is Youre the Worst -> YouretheWorst, so it will match.
-            serienjunkies_name = HTMLParser.HTMLParser().unescape(re.sub('[^\w]+','',r[1]))
+            serienjunkies_name = html.parser.HTMLParser().unescape(re.sub('[^\w]+','',r[1]))
             query_name = re.sub('[^\w]+', '', self.query)
 
             if query_name.lower() in serienjunkies_name.lower(): ## release information in search result, no strict string comparison possible, very lose implementation, could yield wrong results
@@ -146,4 +146,4 @@ class SearchDokujunkies(SearchSerienjunkies):
     
 @event('plugin.register')
 def register_plugin():
-    plugin.register(SearchDokujunkies, 'searchDokujunkies', groups=['search'], api_ver=2)
+    plugin.register(SearchDokujunkies, 'searchDokujunkies', interfaces=['search'], api_ver=2)

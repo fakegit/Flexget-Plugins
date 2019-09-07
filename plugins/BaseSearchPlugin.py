@@ -4,7 +4,7 @@ import logging, json, datetime, time #, urllib, urllib2, re, , HTMLParser, reque
 from bs4 import BeautifulSoup
 from flexget import plugin
 from flexget.entry import Entry
-from flexget.utils.search import normalize_unicode
+from flexget.components.sites.utils import normalize_unicode
 from flexget.utils import requests
 
 #from flexget.event import event
@@ -124,10 +124,10 @@ class BaseSearchPlugin(object):
         return self.get_url_content(self.query_url, params=params)
         
     def replace_sepcial_chars(self, string):
-        string = string.replace(unichr(228), "ae").replace(unichr(196), "Ae")
-        string = string.replace(unichr(252), "ue").replace(unichr(220), "Ue")
-        string = string.replace(unichr(246), "oe").replace(unichr(214), "Oe")
-        string = string.replace(unichr(223), "ss")
+        string = string.replace(chr(228), "ae").replace(chr(196), "Ae")
+        string = string.replace(chr(252), "ue").replace(chr(220), "Ue")
+        string = string.replace(chr(246), "oe").replace(chr(214), "Oe")
+        string = string.replace(chr(223), "ss")
         string = string.replace('&amp;', "&")
         string = string.replace("(","").replace(")","")
         string = string.replace(":","")
