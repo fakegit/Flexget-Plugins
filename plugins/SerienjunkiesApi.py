@@ -6,6 +6,8 @@ from flexget.components.sites.utils import normalize_unicode
 
 from .BaseApi import BaseApi, SearchResultEntry
 
+
+
 class SerienjunkiesApi(BaseApi):
     """
         Serienjunkies Api.
@@ -25,12 +27,14 @@ class SerienjunkiesApi(BaseApi):
         
     def prepare_search_query(self, search_string):
         query = normalize_unicode(search_string)
-        print(query)
+        
         se = re.findall('((((|S|s)[\d]+(e|E|x)[\d]+)|(|S|s)[\d]+))$',query)[0][0]
         query = re.sub(se,'',query).strip()
         
         self.se = se
         self.query = query
+        
+        self.logger.verbose("search: '%s', SXXEXX: '%s'", query, se)
         
         return query
         
@@ -57,11 +61,35 @@ class SerienjunkiesApi(BaseApi):
         return result_entries
     
     def parse_entry(self, target, filesize):
+        links = []
+        found_hoster = False
         for hoster in self.get_hoster_variants():
             r = target.find(text=re.compile(hoster))
             if r is not None:
+                found_hoster = True
+                
                 a = r.find_previous_sibling('a')
-                return SearchResultEntry(title=target.strong.text, links=[a['href']], size=filesize)
+                
+                if a is not None:
+                    links.append(a['href'])
+                    continue
+
+                link = re.findall('<a\s(?:[^\s>]*?\s)*?href="(?:mailto:)?(.*?)".*?>(.+?)<\/a> \| '+hoster, str(target))
+                if len(link)>0:
+                    links.append(link[0][0])
+                    continue
+   
+        links = list(dict.fromkeys(links))
+
+        if len(links) > 0:
+            self.logger.verbose("found %i suitable links for %s",len(links),target.strong.text)
+            return SearchResultEntry(title=target.strong.text, links=links, size=filesize)
+        else:
+            if found_hoster:
+                self.logger.warning("found a suitable-hoster for %s, but it has no links?!",target.strong.text)
+                
+            self.logger.verbose("no suitable link found for %s",target.strong.text)
+            return None
     
     def parse_result_entry(self, entry_page):
     
@@ -101,7 +129,7 @@ class SerienjunkiesApi(BaseApi):
         url = self.feed_query_url + category + ".xml"
         feed=feedparser.parse(url)
         
-        print("loaded",url,"with", str(len(feed.entries)), "entries")
+        self.logger.info("loaded %s with %i entries", url, len(feed.entries))
         
         return feed.entries
     
@@ -114,8 +142,8 @@ class SerienjunkiesApi(BaseApi):
         file_index=1
         while file_index<(file_count+1):
             #create file and begin of RSS-Feed
-            outputFile = codecs.open(prefix+str(file_index)+".xml", "w", "utf-8")
-            outputFile.write("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n")
+            outputFile = open(prefix+str(file_index)+".xml", "w")
+            outputFile.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n")
             outputFile.write("<rss version=\"2.0\">\n")
             outputFile.write("\t<channel>\n")
             outputFile.write("\t\t<title>SerienJunkies-RSS Generator</title>\n")
@@ -130,7 +158,7 @@ class SerienjunkiesApi(BaseApi):
                 if entry_index==len(entries): 
                     break
                 outputFile.write("\t\t<item>\n")
-                outputFile.write("\t\t\t<title>"+entries[entry_index].title+"</title>\n")
+                outputFile.write("\t\t\t<title>"+normalize_unicode(entries[entry_index].title)+"</title>\n")
                 outputFile.write("\t\t\t<link>"+ entries[entry_index].link +"#"+entries[entry_index].title+"-"+datetime.now().strftime('%Y%m%d%H%M%S')+"</link>\n")
                 outputFile.write("\t\t</item>\n")
                 entry_index +=1

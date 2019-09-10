@@ -1,15 +1,20 @@
+import logging
+
 from plugins.BaseApi import BaseApi, SearchResultEntry
 from plugins.HDAreaApi import HDAreaApi
 from plugins.HDWorldApi import HDWorldApi
 from plugins.MovieBlogApi import MovieBlogApi
 from plugins.SerienjunkiesApi import SerienjunkiesApi
 
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 CONFIG = {"hoster":["shareonline"],"language":"german"}
 COUNT_PAGES = 3
 RSS_FOLDER = "/config/rss/"
 
 #HDArea
-hdAreaApi = HDAreaApi( CONFIG )
+hdAreaApi = HDAreaApi( CONFIG, log )
 movies = hdAreaApi.feed(["top-rls","movies","neues"],COUNT_PAGES,{"only_movies":True})
 series = hdAreaApi.feed(["Serien"],COUNT_PAGES,{"only_series":True,"feed_query_category":"c"})
 
@@ -19,7 +24,7 @@ hdAreaApi.generate_rss(series, RSS_FOLDER + "HDArea-Series.xml")
 
 
 #HDWorld
-hdWorldApi = HDWorldApi( CONFIG )
+hdWorldApi = HDWorldApi( CONFIG, log )
 movies = hdWorldApi.feed(["top-releases","neuerscheinungen","x265-filme"],COUNT_PAGES,{"only_movies":True})
 series = hdWorldApi.feed(["serien"],COUNT_PAGES,{"only_series":True})
 
@@ -28,7 +33,7 @@ hdWorldApi.generate_rss(series, RSS_FOLDER + "HDWorld-Series.xml")
 
 
 #MovieBlog
-movieBlogApi = MovieBlogApi( CONFIG )
+movieBlogApi = MovieBlogApi( CONFIG, log )
 movies = movieBlogApi.feed(["top-releases","neuerscheinungen"],COUNT_PAGES,{"only_movies":True})
 series = movieBlogApi.feed(["serien"],COUNT_PAGES,{"only_series":True})
 
@@ -37,7 +42,7 @@ movieBlogApi.generate_rss(series, RSS_FOLDER + "MovieBlog-Series.xml")
 
 
 #Serienjunkies
-serienjunkiesApi = SerienjunkiesApi( CONFIG )
+serienjunkiesApi = SerienjunkiesApi( CONFIG, log )
 
 episodes = serienjunkiesApi.feed("episoden")
 serienjunkiesApi.generate_rss(episodes,{"file_count":10,"entry_count":200,"filename": RSS_FOLDER + "rss_feed_"})

@@ -3,48 +3,42 @@ import logging, re #, urllib, urllib2, json, HTMLParser, requests
 
 from flexget import plugin
 from flexget.event import event
-from flexget.utils.tools import parse_filesize
-from flexget.components.sites.utils import normalize_unicode
 
+#import API
 from .BaseSearchPlugin import BaseSearchPlugin
-
 from .HDAreaApi import HDAreaApi
 from .HDWorldApi import HDWorldApi
 from .MovieBlogApi import MovieBlogApi
 
 
 
-log = logging.getLogger("MovieSearchPlugin")
+log = logging.getLogger(__name__)
 
 class SearchHdarea(BaseSearchPlugin):
     """
         HD-Area search plugin.
     """
-    name = "searchHdarea"
+
     @plugin.internet(log)
     def search(self, task, entry, config):
-        api = HDAreaApi( config )
+        self.log = log
+        
+        api = HDAreaApi( config, log )
         results = api.search(entry.get('search_strings', [entry['title']]))
         return self.create_entries(results)
-
-@event('plugin.register')
-def register_plugin():
-    plugin.register(SearchHdarea, 'searchHdarea', interfaces=['search'], api_ver=2)
 
 class SearchHdworld(BaseSearchPlugin):
     """
         HD-World search plugin.
     """
-    name = "searchHdworld"
+
     @plugin.internet(log)
     def search(self, task, entry, config):
-        api = HDWorldApi( config )
+        self.log = log
+        
+        api = HDWorldApi( config, log )
         results = api.search(entry.get('search_strings', [entry['title']]))
         return self.create_entries(results)
-
-@event('plugin.register')
-def register_plugin():
-    plugin.register(SearchHdworld, 'searchHdworld', interfaces=['search'], api_ver=2)
 
 class SearchMovieBlog(BaseSearchPlugin):
     """
@@ -68,13 +62,26 @@ class SearchMovieBlog(BaseSearchPlugin):
 
         search_results.remove(entry)  
     """
-    name = "searchMovieBlog"
+
     @plugin.internet(log)
     def search(self, task, entry, config):
-        api = MovieBlogApi( config )
+        self.log = log
+        
+        api = MovieBlogApi( config, self.log )
         results = api.search(entry.get('search_strings', [entry['title']]))
         return self.create_entries(results)
+
+
+## register plugins
+
+@event('plugin.register')
+def register_plugin():
+    plugin.register(SearchHdarea, 'searchHdarea', interfaces=['search'], api_ver=2)
     
+@event('plugin.register')
+def register_plugin():
+    plugin.register(SearchHdworld, 'searchHdworld', interfaces=['search'], api_ver=2)
+
 @event('plugin.register')
 def register_plugin():
     plugin.register(SearchMovieBlog, 'searchMovieBlog', interfaces=['search'], api_ver=2)

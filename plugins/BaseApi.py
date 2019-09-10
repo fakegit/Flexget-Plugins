@@ -1,10 +1,12 @@
-import logging, re, json, datetime, time, collections
-
+# -*- coding: utf-8 -*-
+import logging, re, json, collections
+from datetime import datetime
 from bs4 import BeautifulSoup
 #from flexget import plugin
 #from flexget.entry import Entry
 from flexget.components.sites.utils import normalize_unicode
 from flexget.utils import requests
+
 
 #from flexget.event import event
 #from flexget.config_schema import one_or_more
@@ -28,12 +30,15 @@ class SearchResultEntry(object):
     title = ""
     size = 0
     imdb_url = ""
+    imdb_id = ""
     
     def __init__(self, title="", size=0, links=[], imdb_url=""):
         self.title = title
         self.size = size
         self.links = links
         self.imdb_url = imdb_url
+        if imdb_url is not "":
+            self.imdb_id = self.get_imdb_id_from_url(imdb_url)
         
     def getTitle(self):
         return self.title
@@ -46,9 +51,19 @@ class SearchResultEntry(object):
         
     def getImdbUrl(self):
         return self.imdb_url
+    
+    def getImdbId(self):
+        return self.imdb_id
         
     def __str__(self):
      return self.title + " ("+str(self.size)+"GB, "+str(len(self.links))+" links, "+self.imdb_url+")"
+     
+    def get_imdb_id_from_url(self, url):
+        res = re.findall('((tt|nm|co|ev|ch|ni)\d{7})', url)
+        if len(res) > 0:
+            return res[0][0]
+        else:
+            return ""
 
 
 class BaseApi(object):
@@ -65,24 +80,14 @@ class BaseApi(object):
     feed_param_as_folder = []
     
     season = re.compile('.*S\d|\Sd{2}|eason\d|eason\d{2}.*')
-       
-    schema = {
-        'type': 'object',
-        'properties': {
-            'hoster': {'type': 'string'}
-        },
-        'additionalProperties': False
-    }
 
-    def __init__(self, config):
+
+    def __init__(self, config, logger):
         self.config = config
-    
-    def log_soup_to_file(self, soup):
-        filename = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S') + "-result-page.html"
-        with open(filename, "w") as file:
-            file.write(str(soup))
+        self.logger = logger
     
     def init(self):
+        #self.logger.info("init "+__name__)
         self.config.setdefault('hoster', [DEFAULT_HOST])
         hoster = self.config.get("hoster")
         if not isinstance(hoster, collections.Sequence):
@@ -100,7 +105,7 @@ class BaseApi(object):
         return hoster_variants
     
     def get_url_content(self, url, params={}, method = "GET", json = False):
-        print(url,params,method)
+        self.logger.verbose("%s %s with %s",method,url,params)
         try:
             if method is "GET":
                 result = requests.get(url, params=params)
@@ -114,12 +119,12 @@ class BaseApi(object):
                     return {}
             else:
                 return BeautifulSoup(result.content, "html5lib")
-        except Exception:
-            print("raised exception while http request")
+        except Exception as err:
+            self.logger.error("Error while web request: %s",err)
             return None
     
     def search(self, search_strings):
-        self.init(self)
+        self.init()
         
         entries = set()
         
@@ -233,14 +238,20 @@ class BaseApi(object):
         outputFile.write("\t\t<title>"+ type(self).__name__ +" RSS-Generator</title>\n")
         outputFile.write("\t\t<description>"+ type(self).__name__ +" RSS Generator for Flexget</description>\n")
         outputFile.write("\t\t<link>"+self.feed_query_url+"</link>\n")
+        outputFile.write("\t\t<lastBuildDate>"+datetime.now().strftime('%a, %d %b %Y %H:%M:%S +0200')+"</lastBuildDate>\n")
         outputFile.write("\t\t<ttl> </ttl>\n")
         
         for entry in entries:
             for link in entry.getLinks():
                 outputFile.write("\t\t<item>\n")
-                outputFile.write("\t\t\t<title>"+entry.getTitle()+"</title>\n")
+                outputFile.write("\t\t\t<title>"+normalize_unicode(entry.getTitle())+"</title>\n")
                 outputFile.write("\t\t\t<link>"+link+"</link>\n")
-                outputFile.write("\t\t\t<size>"+ ( "{0:.2f}".format(entry.getSize()) ) +"MB</size>\n")
+                
+                if entry.getImdbId():
+                    outputFile.write("\t\t\t<imdb_id>"+entry.getImdbId()+"</link>\n")
+                
+                if entry.getSize():
+                    outputFile.write("\t\t\t<size>"+ ( "{0:.2f}".format(entry.getSize()) ) +"</size>\n")
                 outputFile.write("\t\t</item>\n")
         
         outputFile.write("\t</channel>\n")
@@ -253,3 +264,4 @@ class BaseApi(object):
             return urls[0][0]
         else:
             return ""
+    
