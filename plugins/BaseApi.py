@@ -119,7 +119,7 @@ class BaseApi(object):
             return None
     
     def search(self, search_strings):
-        init(self)
+        self.init(self)
         
         entries = set()
         
