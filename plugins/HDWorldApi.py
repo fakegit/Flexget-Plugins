@@ -48,6 +48,10 @@ class HDWorldApi(BaseApi):
     
     def find_next_link(self, page):
         nav = page.find("div", {"class":"navigation_x"})
+        
+        if nav is None:
+            return None
+        
         rightdiv = nav.find("div", {"class":"alignright"})
         
         next_link = None
